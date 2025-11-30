@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SM ছাত্রাবাস - আল্টিমেট ম্যানেজার</title>
+    <title>SM ছাত্রাবাস - স্মার্ট শিডিউল</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,56 +15,48 @@
     <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- HTML2PDF Library (Latest Version) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- HTML2Canvas Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Fonts -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
         
         body {
             font-family: 'Hind Siliguri', sans-serif;
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #0f172a;
             color: white;
+            margin: 0; padding: 0;
             overflow-x: hidden;
-            margin: 0;
-            padding: 0;
         }
-
         .font-tech { font-family: 'Rajdhani', sans-serif; }
 
-        /* --- CYBERPUNK STYLES (HOME) --- */
+        /* --- UI EFFECTS --- */
         .glass-card {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-
         .neon-glow {
-            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
         }
-
-        /* --- CLEAN STYLES (RESULT) --- */
         .result-item {
             background: rgba(30, 41, 59, 0.6);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .result-item:last-child { border-bottom: none; }
-
         .edit-active {
             border: 1px solid #a855f7;
             background: rgba(168, 85, 247, 0.1);
         }
-
-        /* Animations */
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .admin-active-btn {
+            background-color: #ef4444 !important; /* Red color when admin is active */
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
         }
-        .animate-enter { animation: slideUp 0.5s ease-out forwards; }
+
+        /* Animation */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-enter { animation: fadeIn 0.5s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -77,99 +69,126 @@
         const IconZap = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
         const IconCheck = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>;
         const IconX = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>;
-        const IconLock = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+        const IconLock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+        const IconUnlock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>;
         const IconEdit = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>;
-        const IconSettings = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
-        const IconDownload = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>;
-        const IconSave = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>;
+        const IconImage = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>;
+        const IconLink = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>;
+        const IconTrash = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>;
 
-        const GradientText = ({ children }) => (
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 font-bold">
-                {children}
-            </span>
-        );
+        // --- ENCODING UTILS ---
+        const encodeData = (data) => {
+            try { return btoa(unescape(encodeURIComponent(JSON.stringify(data)))); } catch (e) { return null; }
+        };
+        const decodeData = (str) => {
+            try { return JSON.parse(decodeURIComponent(escape(atob(str)))); } catch (e) { return null; }
+        };
 
         const App = () => {
-            // State
-            const [view, setView] = useState('home');
+            // --- STATE ---
+            const [view, setView] = useState('loading'); // loading, home, result
+            const [isAdmin, setIsAdmin] = useState(false);
+            
+            // Data State
             const [month, setMonth] = useState('December');
             const [totalDays, setTotalDays] = useState(31);
             const [year, setYear] = useState(new Date().getFullYear());
             const [members, setMembers] = useState([]);
             const [inputName, setInputName] = useState('');
             const [schedule, setSchedule] = useState([]);
-            
-            // PDF Generation State
-            const [isPdfMode, setIsPdfMode] = useState(false); // Controls visibility of the white template
-            const [isDownloading, setIsDownloading] = useState(false);
 
-            // Config & Auth
-            const [config, setConfig] = useState({ allowConsecutive: false, minGapDays: 3 });
-            const [isConfigOpen, setIsConfigOpen] = useState(false);
+            // UI State
+            const [isImgMode, setIsImgMode] = useState(false);
             const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-            const [authType, setAuthType] = useState('');
             const [password, setPassword] = useState('');
             const [canEditResult, setCanEditResult] = useState(false);
+            const [copied, setCopied] = useState(false);
+            const [shareableLink, setShareableLink] = useState('');
 
-            // --- FUNCTIONS ---
-            const addMember = () => {
-                if(inputName.trim()) {
-                    setMembers([...members, inputName.trim()]);
-                    setInputName('');
+            // --- INITIAL LOAD ---
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const dataParam = params.get('d');
+
+                if (dataParam) {
+                    const decoded = decodeData(dataParam);
+                    if (decoded) {
+                        setSchedule(decoded.s);
+                        setMonth(decoded.m);
+                        setYear(decoded.y);
+                        setMembers(decoded.p);
+                        setView('result'); // Directly show result if data exists
+                        // Set initial link
+                        setShareableLink(window.location.href);
+                    } else {
+                        setView('home');
+                    }
+                } else {
+                    setView('home');
                 }
-            };
+            }, []);
 
+            // --- LOGIC ---
+            const addMember = () => { if(inputName.trim()) { setMembers([...members, inputName.trim()]); setInputName(''); }};
             const removeMember = (index) => setMembers(members.filter((_, i) => i !== index));
 
             const generateSchedule = () => {
-                if (members.length < 2) {
-                    alert("কমপক্ষে ২ জন সদস্য প্রয়োজন!");
-                    return;
-                }
+                if (members.length < 2) { alert("কমপক্ষে ২ জন সদস্য প্রয়োজন!"); return; }
                 setView('processing');
-                setCanEditResult(false);
-
                 setTimeout(() => {
                     const days = parseInt(totalDays) || 31;
                     let newSchedule = [];
-                    let availableMembers = [...members];
-                    let lastDuty = {}; 
-                    members.forEach(m => lastDuty[m] = -999); 
-
-                    const monthMap = {
-                        "January": 0, "February": 1, "March": 2, "April": 3, "May": 4, "June": 5, 
-                        "July": 6, "August": 7, "September": 8, "October": 9, "November": 10, "December": 11
-                    };
+                    let lastDuty = {}; members.forEach(m => lastDuty[m] = -999); 
+                    const monthMap = { "January":0, "February":1, "March":2, "April":3, "May":4, "June":5, "July":6, "August":7, "September":8, "October":9, "November":10, "December":11 };
 
                     for (let day = 1; day <= days; day++) {
-                        let eligible = availableMembers.filter(m => {
-                            const gap = day - lastDuty[m];
-                            if (!config.allowConsecutive && gap <= 1) return false;
-                            if (gap <= config.minGapDays) return false;
-                            return true;
-                        });
-
-                        if (eligible.length === 0) eligible = availableMembers.filter(m => (day - lastDuty[m]) > 1);
-                        if (eligible.length === 0) eligible = availableMembers;
-
+                        let eligible = availableMembers(members, day, lastDuty);
                         const picked = eligible[Math.floor(Math.random() * eligible.length)];
                         const dateObj = new Date(year, monthMap[month] || 0, day);
                         const dayName = dateObj.toLocaleDateString('bn-BD', { weekday: 'long' });
-
                         newSchedule.push({ day, dayName, person: picked });
                         lastDuty[picked] = day;
                     }
-
                     setSchedule(newSchedule);
                     setView('result');
+                    updateUrlState(newSchedule, month, year, members);
                 }, 1500);
+            };
+
+            const availableMembers = (members, day, lastDuty) => {
+                // Rule: Try 2 days gap, then 1 day gap
+                let pool = members.filter(m => (day - lastDuty[m]) > 2);
+                if (pool.length === 0) pool = members.filter(m => (day - lastDuty[m]) > 1);
+                if (pool.length === 0) pool = members;
+                return pool;
+            }
+
+            const updateUrlState = (sch, m, y, p) => {
+                const data = { s: sch, m: m, y: y, p: p };
+                const encoded = encodeData(data);
+                if (encoded) {
+                    const newUrl = `${window.location.pathname}?d=${encoded}`;
+                    const fullUrl = `${window.location.protocol}//${window.location.host}${newUrl}`;
+                    setShareableLink(fullUrl);
+                    try { window.history.pushState({ path: newUrl }, '', newUrl); } catch (e) {}
+                }
+            };
+
+            // --- ADMIN & EDITING ---
+            const toggleAdmin = () => {
+                if (isAdmin) {
+                    // Turn OFF Admin
+                    setIsAdmin(false);
+                    setCanEditResult(false);
+                } else {
+                    // Turn ON Admin (Ask Password)
+                    setIsAuthModalOpen(true);
+                }
             };
 
             const handleAuthSubmit = () => {
                 if (password === '8546') {
-                    if (authType === 'config') setIsConfigOpen(true);
-                    else if (authType === 'edit') setCanEditResult(true);
-                    
+                    setIsAdmin(true);
                     setIsAuthModalOpen(false);
                     setPassword('');
                 } else {
@@ -178,87 +197,87 @@
                 }
             };
 
-            const saveChanges = () => {
+            const resetAll = () => {
+                if(confirm('সতর্কতা: বর্তমান তালিকা মুছে ফেলা হবে। আপনি কি নিশ্চিত?')) {
+                    setView('home'); setSchedule([]); setMembers([]); setIsAdmin(false);
+                    setShareableLink('');
+                    try { window.history.pushState({}, '', window.location.pathname); } catch(e) {}
+                }
+            };
+
+            const saveEdits = () => {
                 setCanEditResult(false);
+                updateUrlState(schedule, month, year, members);
+                alert("আপডেট করা হয়েছে!");
             };
 
-            // --- FIXED PDF DOWNLOAD ---
-            const downloadPDF = () => {
-                setIsDownloading(true);
-                // 1. Show the white template
-                setIsPdfMode(true);
+            const copyLink = () => {
+                const linkToCopy = shareableLink || window.location.href;
+                const textArea = document.createElement("textarea");
+                textArea.value = linkToCopy;
+                textArea.style.position = "fixed"; textArea.style.left = "-9999px";
+                document.body.appendChild(textArea); textArea.focus(); textArea.select();
+                try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (e) {}
+                document.body.removeChild(textArea);
+            };
 
-                // 2. Wait a moment for it to render in the DOM
+            // --- FULL IMAGE DOWNLOAD ---
+            const downloadImage = () => {
+                setIsImgMode(true);
                 setTimeout(() => {
-                    const element = document.getElementById('pdf-template-container');
-                    
-                    const opt = {
-                        margin:       10,
-                        filename:     `SM_Hostel_${month}_${year}.pdf`,
-                        image:        { type: 'jpeg', quality: 0.98 },
-                        html2canvas:  { scale: 2, useCORS: true },
-                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-
-                    // 3. Capture and Download
-                    html2pdf().from(element).set(opt).save().then(() => {
-                        // 4. Hide the white template
-                        setIsPdfMode(false);
-                        setIsDownloading(false);
+                    const element = document.getElementById('image-template-container');
+                    html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowHeight: element.scrollHeight + 50 }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `SM_Hostel_${month}_${year}.jpg`;
+                        link.href = canvas.toDataURL('image/jpeg', 1.0);
+                        link.click();
+                        setIsImgMode(false);
                     });
-                }, 500); // 500ms delay to ensure rendering
+                }, 500);
             };
 
-            const displayMonth = {
-                "January": "জানুয়ারি", "February": "ফেব্রুয়ারি", "March": "মার্চ", "April": "এপ্রিল", "May": "মে", "June": "জুন",
-                "July": "জুলাই", "August": "আগস্ট", "September": "সেপ্টেম্বর", "October": "অক্টোবর", "November": "নভেম্বর", "December": "ডিসেম্বর"
-            }[month] || month;
+            const displayMonth = { "January":"জানুয়ারি", "February":"ফেব্রুয়ারি", "March":"মার্চ", "April":"এপ্রিল", "May":"মে", "June":"জুন", "July":"জুলাই", "August":"আগস্ট", "September":"সেপ্টেম্বর", "October":"অক্টোবর", "November":"নভেম্বর", "December":"ডিসেম্বর" }[month] || month;
+
+            if (view === 'loading') return <div className="min-h-screen bg-slate-900"></div>;
 
             return (
                 <div className="min-h-screen flex justify-center bg-slate-900">
                     <div className="w-full max-w-md bg-slate-900 min-h-screen relative shadow-2xl flex flex-col overflow-hidden">
                         
-                        {/* Background Blobs (Visible only in Home) */}
-                        {view === 'home' && (
-                            <>
-                                <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[40%] bg-purple-600/20 blur-[100px] rounded-full pointer-events-none"></div>
-                                <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
-                            </>
-                        )}
-
-                        {/* --- VISIBLE PDF TEMPLATE (Only shows during download) --- */}
-                        {isPdfMode && (
-                            <div id="pdf-template-container" className="fixed inset-0 bg-white z-[9999] p-8 text-black overflow-auto">
-                                <div className="text-center mb-6 border-b-2 border-black pb-4">
-                                    <h1 className="text-3xl font-bold">SM ছাত্রাবাস বাজার তালিকা</h1>
-                                    <p className="text-xl">{displayMonth} {year}</p>
+                        {/* Background */}
+                        <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[40%] bg-purple-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                        
+                        {/* --- HIDDEN IMAGE TEMPLATE (Full Length for Download) --- */}
+                        {isImgMode && (
+                            <div id="image-template-container" style={{ position: 'absolute', top: 0, left: 0, width: '600px', background: 'white', color: 'black', padding: '40px', zIndex: 99999, fontFamily: "'Hind Siliguri', sans-serif" }}>
+                                <div className="text-center mb-6">
+                                    <h1 className="text-3xl font-bold mb-2 text-black">SM ছাত্রাবাস বাজার তালিকা</h1>
+                                    <p className="text-xl text-gray-700">{displayMonth} {year}</p>
+                                    <div className="w-full h-1 bg-black mt-4"></div>
                                 </div>
-                                <table className="w-full border-collapse">
+                                <table style={{width: '100%', borderCollapse: 'collapse', border: '1px solid #000'}}>
                                     <thead>
-                                        <tr className="bg-gray-200">
-                                            <th className="border border-gray-400 p-2 text-center">তারিখ</th>
-                                            <th className="border border-gray-400 p-2 text-left">বার</th>
-                                            <th className="border border-gray-400 p-2 text-left">নাম</th>
+                                        <tr style={{background: '#e5e7eb'}}>
+                                            <th style={{border: '1px solid #000', padding: '10px', width: '20%', fontSize: '18px'}}>তারিখ</th>
+                                            <th style={{border: '1px solid #000', padding: '10px', width: '30%', fontSize: '18px'}}>বার</th>
+                                            <th style={{border: '1px solid #000', padding: '10px', textAlign: 'left', fontSize: '18px'}}>নাম</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {schedule.map((item, idx) => (
                                             <tr key={idx}>
-                                                <td className="border border-gray-400 p-2 text-center font-bold">{item.day}</td>
-                                                <td className="border border-gray-400 p-2">{item.dayName}</td>
-                                                <td className="border border-gray-400 p-2 font-bold">{item.person}</td>
+                                                <td style={{border: '1px solid #000', padding: '10px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px'}}>{item.day}</td>
+                                                <td style={{border: '1px solid #000', padding: '10px', textAlign: 'center', fontSize: '16px'}}>{item.dayName}</td>
+                                                <td style={{border: '1px solid #000', padding: '10px', fontWeight: 'bold', fontSize: '18px'}}>{item.person}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
-                                <div className="mt-12 flex justify-between text-sm">
-                                    <p>জেনারেটেড বাই: SM ম্যানেজার</p>
-                                    <p>ম্যানেজারের স্বাক্ষর: ________________</p>
-                                </div>
+                                <div className="mt-10 text-center text-sm text-gray-500"><p>Created by: SM Manager App</p></div>
                             </div>
                         )}
 
-                        {/* --- VIEW: HOME (CYBERPUNK UI) --- */}
+                        {/* --- INPUT VIEW (HOME) --- */}
                         {view === 'home' && (
                             <div className="p-6 flex-1 flex flex-col animate-enter z-10">
                                 <div className="mt-8 mb-8">
@@ -266,115 +285,82 @@
                                         <div className="h-1 w-8 bg-purple-500 rounded-full"></div>
                                         <span className="text-xs font-tech tracking-[0.2em] text-purple-400 uppercase">সিস্টেম রেডি</span>
                                     </div>
-                                    <h1 className="text-4xl font-bold text-white leading-tight">
-                                        SM <br />
-                                        <GradientText>ছাত্রাবাস</GradientText>
-                                    </h1>
+                                    <h1 className="text-4xl font-bold text-white">SM <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">ছাত্রাবাস</span></h1>
                                 </div>
 
                                 <div className="glass-card rounded-3xl p-6 mb-6">
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                         <div>
-                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-bold">মাস</label>
-                                            <select 
-                                                value={month} onChange={e => setMonth(e.target.value)}
-                                                className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl p-3 mt-1 focus:outline-none focus:border-purple-500 font-tech"
-                                            >
+                                            <label className="text-xs text-gray-400 font-bold uppercase">মাস</label>
+                                            <select value={month} onChange={e => setMonth(e.target.value)} className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl p-3 mt-1 outline-none font-tech">
                                                 {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => <option key={m} value={m}>{m}</option>)}
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="text-xs text-gray-400 uppercase tracking-wider font-bold">মোট দিন</label>
-                                            <input 
-                                                type="number" value={totalDays} onChange={e => setTotalDays(e.target.value)}
-                                                className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl p-3 mt-1 focus:outline-none focus:border-purple-500 font-tech"
-                                            />
+                                            <label className="text-xs text-gray-400 font-bold uppercase">মোট দিন</label>
+                                            <input type="number" value={totalDays} onChange={e => setTotalDays(e.target.value)} className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl p-3 mt-1 outline-none font-tech"/>
                                         </div>
                                     </div>
-
                                     <div className="mb-4">
-                                        <label className="text-xs text-gray-400 uppercase tracking-wider font-bold">সদস্য যোগ করুন</label>
+                                        <label className="text-xs text-gray-400 font-bold uppercase">সদস্য যোগ করুন</label>
                                         <div className="flex gap-2 mt-1">
-                                            <input 
-                                                type="text" value={inputName} onChange={e => setInputName(e.target.value)}
-                                                onKeyDown={e => e.key === 'Enter' && addMember()}
-                                                placeholder="নাম লিখুন..."
-                                                className="flex-1 bg-slate-800/50 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-purple-500"
-                                            />
-                                            <button onClick={addMember} className="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-xl transition-colors">
-                                                <IconCheck />
-                                            </button>
+                                            <input type="text" value={inputName} onChange={e => setInputName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addMember()} placeholder="নাম..." className="flex-1 bg-slate-800/50 border border-slate-700 text-white rounded-xl p-3 outline-none"/>
+                                            <button onClick={addMember} className="bg-purple-600 p-3 rounded-xl text-white"><IconCheck /></button>
                                         </div>
                                     </div>
-
-                                    <div className="flex flex-wrap gap-2 min-h-[50px]">
-                                        {members.length === 0 && <span className="text-sm text-gray-600 italic">এখনও কোন সদস্য নেই...</span>}
+                                    <div className="flex flex-wrap gap-2">
                                         {members.map((m, i) => (
                                             <span key={i} className="flex items-center gap-1 bg-slate-800 text-purple-300 px-3 py-1 rounded-full text-sm border border-slate-700">
-                                                {m}
-                                                <button onClick={() => removeMember(i)} className="text-gray-500 hover:text-red-400 ml-1"><IconX /></button>
+                                                {m} <button onClick={() => removeMember(i)} className="text-gray-500 hover:text-red-400 ml-1"><IconX /></button>
                                             </span>
                                         ))}
                                     </div>
                                 </div>
-
                                 <div className="flex-1"></div>
-                                <button 
-                                    onClick={generateSchedule}
-                                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-lg shadow-lg shadow-purple-900/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-8 neon-glow"
-                                >
+                                <button onClick={generateSchedule} className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-lg shadow-lg neon-glow mb-8 flex justify-center items-center gap-2">
                                     <IconZap /> লটারি শুরু করুন
                                 </button>
                             </div>
                         )}
 
-                        {/* --- VIEW: PROCESSING --- */}
+                        {/* --- PROCESSING --- */}
                         {view === 'processing' && (
                             <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-900 z-20">
                                 <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                                <p className="text-purple-400 font-tech tracking-widest animate-pulse">CALCULATING...</p>
+                                <p className="text-purple-400 font-tech tracking-widest animate-pulse">GENERATING...</p>
                             </div>
                         )}
 
-                        {/* --- VIEW: RESULT (CLEAN UI) --- */}
+                        {/* --- RESULT VIEW (LOCKED/ADMIN) --- */}
                         {view === 'result' && (
                             <div className="flex-1 flex flex-col h-screen bg-slate-900 z-20">
-                                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+                                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 shadow-md">
                                     <div>
-                                        <h2 className="text-xs text-purple-400 font-bold uppercase">ফলাফল</h2>
+                                        <h2 className="text-xs font-bold uppercase flex items-center gap-2">
+                                            {isAdmin ? <span className="text-red-400">অ্যাডমিন মোড</span> : <span className="text-purple-400">রিড অনলি</span>}
+                                        </h2>
                                         <h1 className="text-xl font-bold text-white">{displayMonth} {year}</h1>
                                     </div>
-                                    <button onClick={() => setView('home')} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-gray-400">
-                                        <IconX />
+                                    <button onClick={copyLink} className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-800 text-xs text-gray-300 hover:text-white border border-slate-700 transition-all active:scale-95">
+                                        {copied ? 'কপি হয়েছে!' : <><IconLink /> শেয়ার লিংক</>}
                                     </button>
                                 </div>
 
-                                {/* List Container */}
                                 <div className="flex-1 overflow-y-auto p-4 pb-24 bg-slate-900">
                                     <div className="space-y-2">
                                         {schedule.map((item, idx) => (
                                             <div key={idx} className={`result-item p-3 rounded-lg flex items-center justify-between ${canEditResult ? 'edit-active' : ''}`}>
-                                                
                                                 <div className="flex items-center gap-4 w-full">
-                                                    {/* Date Box */}
                                                     <div className="flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded text-center">
                                                         <span className="text-lg font-bold text-purple-400">{item.day}</span>
                                                         <span className="text-[10px] text-gray-400 uppercase">{item.dayName.slice(0,3)}</span>
                                                     </div>
-                                                    
-                                                    {/* Name & Day */}
                                                     <div className="w-full">
                                                         <p className="text-xs text-gray-500">{item.dayName}</p>
                                                         {canEditResult ? (
-                                                            <select 
-                                                                className="bg-slate-900 text-white p-2 rounded border border-purple-500 outline-none text-sm mt-1 w-full"
-                                                                value={item.person}
-                                                                onChange={(e) => {
-                                                                    const newSch = [...schedule];
-                                                                    newSch[idx].person = e.target.value;
-                                                                    setSchedule(newSch);
-                                                                }}
-                                                            >
+                                                            <select className="bg-slate-900 text-white p-2 rounded border border-purple-500 outline-none text-sm mt-1 w-full" value={item.person} onChange={(e) => {
+                                                                const newSch = [...schedule]; newSch[idx].person = e.target.value; setSchedule(newSch);
+                                                            }}>
                                                                 {members.map(m => <option key={m} value={m}>{m}</option>)}
                                                             </select>
                                                         ) : (
@@ -387,110 +373,50 @@
                                     </div>
                                 </div>
 
-                                {/* Footer Controls */}
                                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-slate-800 border-t border-slate-700 flex gap-3 z-30">
-                                    {canEditResult ? (
-                                        <button 
-                                            onClick={saveChanges} 
-                                            className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold flex justify-center items-center gap-2 shadow-lg"
-                                        >
-                                            <IconCheck /> সেভ করুন
+                                    {/* Normal User View */}
+                                    {!isAdmin && (
+                                        <button onClick={downloadImage} className="w-full py-3 rounded-xl bg-green-600 text-white font-bold flex justify-center items-center gap-2 shadow-lg active:scale-95 transition-transform">
+                                            <IconImage /> ছবি ডাউনলোড
                                         </button>
-                                    ) : (
+                                    )}
+
+                                    {/* Admin View */}
+                                    {isAdmin && (
                                         <>
-                                            <button onClick={() => setView('home')} className="flex-1 py-3 rounded-xl bg-slate-700 text-gray-300 font-bold hover:bg-slate-600">রিসেট</button>
-                                            <button 
-                                                onClick={downloadPDF} 
-                                                disabled={isDownloading}
-                                                className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold flex justify-center items-center gap-2 shadow-lg"
-                                            >
-                                                {isDownloading ? <span className="animate-pulse">ডাউনলোড...</span> : <><IconDownload /> পিডিএফ</>}
-                                            </button>
+                                            {canEditResult ? (
+                                                <button onClick={saveEdits} className="w-full py-3 rounded-xl bg-purple-600 text-white font-bold flex justify-center items-center gap-2"><IconCheck /> সেভ করুন</button>
+                                            ) : (
+                                                <>
+                                                    <button onClick={resetAll} className="flex-1 py-3 rounded-xl bg-red-900/50 text-red-300 font-bold flex justify-center gap-2 items-center"><IconTrash /> রিসেট</button>
+                                                    <button onClick={() => setCanEditResult(true)} className="flex-1 py-3 rounded-xl bg-slate-700 text-white font-bold flex justify-center gap-2 items-center"><IconEdit /> এডিট</button>
+                                                    <button onClick={downloadImage} className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold flex justify-center gap-2 items-center"><IconImage /> IMG</button>
+                                                </>
+                                            )}
                                         </>
                                     )}
                                 </div>
-
-                                {/* Edit Trigger (Hidden when editing) */}
-                                {!canEditResult && (
-                                    <div className="absolute bottom-20 right-4 z-30">
-                                        <button 
-                                            onClick={() => { setAuthType('edit'); setIsAuthModalOpen(true); }} 
-                                            className="p-3 rounded-full shadow-lg bg-slate-700 text-gray-400 hover:text-white transition-colors"
-                                        >
-                                            <IconEdit />
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         )}
 
-                        {/* --- ADMIN TRIGGER (HOME) --- */}
-                        {view === 'home' && (
-                            <div className="absolute bottom-2 right-2 opacity-30 hover:opacity-100 z-20">
-                                <button onClick={() => { setAuthType('config'); setIsAuthModalOpen(true); }} className="p-2 text-gray-500 hover:text-white">
-                                    <IconLock />
-                                </button>
-                            </div>
-                        )}
+                        {/* --- ADMIN TRIGGER (Hidden/Small) --- */}
+                        <div 
+                            className={`fixed bottom-1 right-1 z-50 cursor-pointer p-2 rounded-full transition-all duration-300 ${isAdmin ? 'admin-active-btn text-white opacity-100' : 'text-gray-600 hover:text-white opacity-10 hover:opacity-100'}`} 
+                            onClick={toggleAdmin}
+                            title="Admin Access"
+                        >
+                            {isAdmin ? <IconUnlock /> : <IconLock />}
+                        </div>
 
                         {/* --- AUTH MODAL --- */}
                         {isAuthModalOpen && (
                             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-enter">
                                 <div className="bg-slate-800 w-full rounded-2xl p-6 border border-slate-700 shadow-2xl">
-                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                        <IconLock /> পাসওয়ার্ড দিন
-                                    </h3>
-                                    <input 
-                                        type="password" 
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-center text-2xl tracking-[0.5em] text-white outline-none focus:border-purple-500 mb-4"
-                                        autoFocus
-                                    />
+                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><IconLock /> পাসওয়ার্ড দিন</h3>
+                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-center text-2xl tracking-[0.5em] text-white outline-none focus:border-purple-500 mb-4" autoFocus placeholder="****" />
                                     <div className="flex gap-3">
                                         <button onClick={() => setIsAuthModalOpen(false)} className="flex-1 py-3 bg-slate-700 rounded-lg text-white">বাতিল</button>
                                         <button onClick={handleAuthSubmit} className="flex-1 py-3 bg-purple-600 rounded-lg text-white font-bold">আনলক</button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* --- CONFIG MODAL --- */}
-                        {isConfigOpen && (
-                            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-enter">
-                                <div className="bg-slate-800 w-full rounded-2xl p-6 border border-slate-700 shadow-2xl">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                            <IconSettings /> সেটিংস
-                                        </h3>
-                                        <button onClick={() => setIsConfigOpen(false)} className="text-gray-400 hover:text-white"><IconX /></button>
-                                    </div>
-
-                                    <div className="space-y-6">
-                                        <div>
-                                            <label className="flex justify-between text-sm text-gray-300 mb-2">
-                                                <span>পরপর ২ দিন বাজার</span>
-                                                <span className={config.allowConsecutive ? "text-green-400" : "text-red-400"}>{config.allowConsecutive ? "অনুমোদিত" : "নিষিদ্ধ"}</span>
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => setConfig({...config, allowConsecutive: true})} className={`flex-1 py-2 rounded text-xs font-bold ${config.allowConsecutive ? 'bg-green-600 text-white' : 'bg-slate-700 text-gray-400'}`}>হ্যাঁ</button>
-                                                <button onClick={() => setConfig({...config, allowConsecutive: false})} className={`flex-1 py-2 rounded text-xs font-bold ${!config.allowConsecutive ? 'bg-red-600 text-white' : 'bg-slate-700 text-gray-400'}`}>না</button>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="flex justify-between text-sm text-gray-300 mb-2">
-                                                <span>ন্যূনতম বিরতি: {config.minGapDays} দিন</span>
-                                            </label>
-                                            <input 
-                                                type="range" min="1" max="7" 
-                                                value={config.minGapDays} 
-                                                onChange={e => setConfig({...config, minGapDays: parseInt(e.target.value)})}
-                                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                                            />
-                                        </div>
-
-                                        <button onClick={() => setIsConfigOpen(false)} className="w-full py-3 bg-purple-600 rounded-lg text-white font-bold hover:bg-purple-500">সেভ করুন</button>
                                     </div>
                                 </div>
                             </div>
